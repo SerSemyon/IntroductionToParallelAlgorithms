@@ -1,9 +1,7 @@
-﻿// IntroductionToParallelAlgorithms.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
-//
-
+﻿#define _USE_MATH_DEFINES
+#include <cmath>
 #include <iostream>
 #include <vector>
-#include "TridiagonalMatrix.h"
 
 std::vector<double> CreateRandomVector(size_t n)
 {
@@ -92,13 +90,13 @@ std::vector<double> CyclicReduction(std::vector<double> a, std::vector<double> b
     return x;
 }
 
-int main()
+void TestReduction() 
 {
     int q = 4; //n=2^q - количество уравнений
     int n = pow(2, q);
-    std::vector<double> a = CreateRandomVector(n+1);
-    std::vector<double> b = CreateRandomVector(n+1);
-    std::vector<double> c = CreateRandomVector(n+1);
+    std::vector<double> a = CreateRandomVector(n + 1);
+    std::vector<double> b = CreateRandomVector(n + 1);
+    std::vector<double> c = CreateRandomVector(n + 1);
     a[0] = 0;
     c[0] = 0;
     b[0] = 1;
@@ -109,17 +107,37 @@ int main()
     std::vector<double> f(n + 1);
     f[0] = x[0];
     f[n] = x[n];
-    //std::cout << x[0] << '=' << f[0] << std::endl;
     for (int i = 1; i < n; i++)
     {
-        f[i] = -a[i] * x[i - 1] + b[i] * x[i] - c[i]*x[i + 1];
-        //std::cout << -a[i] << '*' << x[i - 1] << '+' << b[i] << '*' << x[i] << '-' << c[i] << '*' << x[i + 1] << '=' << f[i] << std::endl;
+        f[i] = -a[i] * x[i - 1] + b[i] * x[i] - c[i] * x[i + 1];
     }
-    //std::cout << x[n] << '=' << f[n] << std::endl;
-
     std::vector<double> res = CyclicReduction(a, b, c, f, q, n);
     for (int i = 0; i < res.size(); i++)
     {
         std::cout << x[i] << " " << res[i] << std::endl;
     }
+}
+
+const double a = -1;
+const double b = 1;
+const double epsilon = 0.05;
+
+double q(double x)
+{
+    return 1.0 / epsilon;
+}
+
+double f(double x)
+{
+    return (1.0 / epsilon + M_PI * M_PI) * cos(M_PI * x);
+}
+
+double u(double x)
+{
+    return cos(M_PI_2 * x) + exp((x - 1) / sqrt(epsilon)) + exp(-(x + 1) / sqrt(epsilon));
+}
+
+int main()
+{
+    TestReduction();
 }
