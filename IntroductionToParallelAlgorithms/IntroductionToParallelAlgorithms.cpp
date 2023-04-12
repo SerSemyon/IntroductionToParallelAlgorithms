@@ -137,6 +137,36 @@ double u(double x)
     return cos(M_PI_2 * x) + exp((x - 1) / sqrt(epsilon)) + exp(-(x + 1) / sqrt(epsilon));
 }
 
+//n=2^q - количество уравнений
+void Task1(double degree)
+{
+    int n = pow(2, degree);
+    double h = (b - a) / n;
+    std::vector<double> c1(n + 1);
+    std::vector<double> c2(n + 1);
+    std::vector<double> c3(n + 1);
+    std::vector<double> x(n + 1);
+    std::vector<double> d(n + 1);
+    for (int i = 1; i < n; i++)
+    {
+        x[i] = a + i * h;
+        c1[i] = -1;
+        c2[i] = 2 + h * h * q(x[i]);
+        c3[i] = -1;
+        d[i] = h * h * f(x[i]);
+    }
+    c1[0] = 0;
+    c2[0] = 1;
+    c3[0] = 0;
+    c1[n] = 0;
+    c2[n] = 1;
+    c3[n] = 0;
+    d[0] = u(a);
+    d[n] = u(b);
+    std::vector<double> res = CyclicReduction(c1, c2, c3, d, degree, n);
+    
+}
+
 int main()
 {
     TestReduction();
