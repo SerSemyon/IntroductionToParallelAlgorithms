@@ -2,6 +2,11 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include <omp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <windows.h>
+#include "log_duration.h"
 
 std::vector<double> CreateRandomVector(size_t n)
 {
@@ -64,11 +69,15 @@ std::vector<double> CyclicReduction(std::vector<double> a, std::vector<double> b
     for (int k = 1; k < q; k++)
     {
         int twoInK = pow(2, k);
-        double twoInKminusOne = pow(2, k - 1);
+        int twoInKminusOne = pow(2, k - 1);
+        omp_set_num_threads(6);
+        double P;
+        double Q;
+        #pragma omp parallel for 
         for (int i = twoInK; i < n; i += twoInK)
         {
-            double P = a[i] / b[i - twoInKminusOne];
-            double Q = c[i] / b[i + twoInKminusOne];
+            P = a[i] / b[i - twoInKminusOne];
+            Q = c[i] / b[i + twoInKminusOne];
             a[i] = P * a[i - twoInKminusOne];
             b[i] = b[i] - P * c[i - twoInKminusOne] - Q * a[i + twoInKminusOne];
             c[i] = Q * c[i + twoInKminusOne];
@@ -92,7 +101,7 @@ std::vector<double> CyclicReduction(std::vector<double> a, std::vector<double> b
 
 void TestReduction() 
 {
-    int q = 4; //n=2^q - количество уравнений
+    int q = 14; //n=2^q - количество уравнений
     int n = pow(2, q);
     std::vector<double> a = CreateRandomVector(n + 1);
     std::vector<double> b = CreateRandomVector(n + 1);
@@ -114,7 +123,7 @@ void TestReduction()
     std::vector<double> res = CyclicReduction(a, b, c, f, q, n);
     for (int i = 0; i < res.size(); i++)
     {
-        std::cout << x[i] << " " << res[i] << std::endl;
+        //std::cout << x[i] << " " << res[i] << std::endl;
     }
 }
 
@@ -169,5 +178,10 @@ void Task1(double degree)
 
 int main()
 {
-    TestReduction();
+    {
+        LOG_DURATION("Time");
+        for (int i = 0; i < 10; i++)
+            TestReduction();
+    }
+    //TestReduction();
 }
