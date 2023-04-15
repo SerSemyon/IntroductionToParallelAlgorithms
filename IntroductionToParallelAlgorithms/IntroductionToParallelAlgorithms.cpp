@@ -1,8 +1,8 @@
 ﻿#define _USE_MATH_DEFINES
+#include <omp.h>
 #include <cmath>
 #include <iostream>
 #include <vector>
-#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
@@ -20,22 +20,20 @@ std::vector<double> CreateRandomVector(size_t n)
 
 std::vector<double> CyclicReduction(std::vector<double> a, std::vector<double> b, std::vector<double> c, std::vector<double> f, const int q, const int n)
 {
+    double* P = new double[n];
+    double* Q = new double[n];
     for (int k = 1; k < q; k++)
     {
         int twoInK = pow(2, k);
         int twoInKminusOne = pow(2, k - 1);
-        omp_set_num_threads(4);
-        double P;
-        double Q;
-        #pragma omp parallel for 
         for (int i = twoInK; i < n; i += twoInK)
         {
-            P = a[i] / b[i - twoInKminusOne];
-            Q = c[i] / b[i + twoInKminusOne];
-            a[i] = P * a[i - twoInKminusOne];
-            b[i] = b[i] - P * c[i - twoInKminusOne] - Q * a[i + twoInKminusOne];
-            c[i] = Q * c[i + twoInKminusOne];
-            f[i] = f[i] + P * f[i - twoInKminusOne] + Q * f[i + twoInKminusOne];
+            P[i] = a[i] / b[i - twoInKminusOne];
+            Q[i] = c[i] / b[i + twoInKminusOne];
+            a[i] = P[i] * a[i - twoInKminusOne];
+            b[i] = b[i] - P[i] * c[i - twoInKminusOne] - Q[i] * a[i + twoInKminusOne];
+            c[i] = Q[i] * c[i + twoInKminusOne];
+            f[i] = f[i] + P[i] * f[i - twoInKminusOne] + Q[i] * f[i + twoInKminusOne];
         }
     }
     std::vector<double> x(n + 1);
@@ -50,6 +48,8 @@ std::vector<double> CyclicReduction(std::vector<double> a, std::vector<double> b
             x[i] = (f[i] + a[i] * x[i - twoInKminusOne] + c[i] * x[i + twoInKminusOne]) / b[i];
         }
     }
+    delete[] P;
+    delete[] Q;
     return x;
 }
 
@@ -92,13 +92,13 @@ void TestThomas()
     std::vector<double> res = ThomasAlgorithm(a, b, c, f);
     for (int i = 0; i < res.size(); i++)
     {
-        std::cout << x[i] << " " << res[i] << std::endl;
+        //std::cout << x[i] << " " << res[i] << std::endl;
     }
 }
 
 void TestReduction() 
 {
-    int q = 4; //n=2^q - количество уравнений
+    int q = 15; //n=2^q - количество уравнений
     int n = pow(2, q);
     std::vector<double> a = CreateRandomVector(n + 1);
     std::vector<double> b = CreateRandomVector(n + 1);
@@ -120,7 +120,7 @@ void TestReduction()
     std::vector<double> res = CyclicReduction(a, b, c, f, q, n);
     for (int i = 0; i < res.size(); i++)
     {
-        std::cout << x[i] << " " << res[i] << std::endl;
+        //std::cout << x[i] << " " << res[i] << std::endl;
     }
 }
 
@@ -142,26 +142,6 @@ double u(double x)
 {
     return (exp(-x/sqrt(epsilon))-exp((x-2)/sqrt(epsilon)))/(1-exp(-2/sqrt(epsilon)));
 }
-
-
-//const double a = -1;
-//const double b = 1;
-//const double epsilon = 0.05;
-//
-//double q(double x)
-//{
-//    return 1.0 / epsilon;
-//}
-//
-//double f(double x)
-//{
-//    return (1.0 / epsilon + M_PI * M_PI) * cos(M_PI * x);
-//}
-//
-//double u(double x)
-//{
-//    return cos(M_PI_2 * x) + exp((x - 1) / sqrt(epsilon)) + exp(-(x + 1) / sqrt(epsilon));
-//}
 
 //n=2^q - количество уравнений
 void Task1(double degree)
@@ -205,7 +185,7 @@ int main()
         TestThomas();
     }
     {
-        LOG_DURATION("Time");
+        LOG_DURATION("TestReduction");
         for (int i = 0; i < 1; i++)
             TestReduction();
     }
