@@ -143,6 +143,18 @@ double u(double x)
     return (exp(-x/sqrt(epsilon))-exp((x-2)/sqrt(epsilon)))/(1-exp(-2/sqrt(epsilon)));
 }
 
+double Inaccuracy(std::vector<double> x, std::vector<double> y)
+{
+    double inaccuracy = 0;
+    for (int i = 0; i < y.size(); i++)
+    {
+        double diff = abs(y[i] - u(x[i]));
+        if (diff > inaccuracy)
+            inaccuracy = diff;
+    }
+    return inaccuracy;
+}
+
 //n=2^q - количество уравнений
 void Task1(double degree)
 {
@@ -174,8 +186,9 @@ void Task1(double degree)
     std::vector<double> res = CyclicReduction(c1, c2, c3, d, degree, n);
     for (size_t i = 0; i < res.size(); i++)
     {
-        std::cout << u(x[i]) << " " << res[i] << std::endl;
+        //std::cout << u(x[i]) << " " << res[i] << std::endl;
     }
+    std::cout << "inaccuracy " << Inaccuracy(x, res) << std::endl;
 }
 
 int main()
@@ -189,5 +202,8 @@ int main()
         for (int i = 0; i < 1; i++)
             TestReduction();
     }
-    Task1(5);
+    {
+        LOG_DURATION("Task 1");
+        Task1(8);
+    }
 }
