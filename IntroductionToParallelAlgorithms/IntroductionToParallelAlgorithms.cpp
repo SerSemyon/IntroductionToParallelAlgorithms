@@ -20,6 +20,7 @@ std::vector<double> CreateRandomVector(size_t n)
 
 std::vector<double> CyclicReduction(std::vector<double> a, std::vector<double> b, std::vector<double> c, std::vector<double> f, const int q, const int n)
 {
+    omp_set_num_threads(3);
     double* P = new double[n];
     double* Q = new double[n];
     for (int k = 1; k < q; k++)
