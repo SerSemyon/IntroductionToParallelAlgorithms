@@ -26,6 +26,7 @@ std::vector<double> CyclicReduction(std::vector<double> a, std::vector<double> b
     {
         int twoInK = pow(2, k);
         int twoInKminusOne = pow(2, k - 1);
+#pragma omp parallel for
         for (int i = twoInK; i < n; i += twoInK)
         {
             P[i] = a[i] / b[i - twoInKminusOne];
