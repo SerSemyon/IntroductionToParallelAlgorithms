@@ -237,31 +237,4 @@ int main()
         Task1(i);
         std::cout << std::endl;
     }
-
-    std::cout << std::endl;
-    std::vector<double> x(10000);
-    {
-        LOG_DURATION("1");
-        for (int i = 0; i < 10000; i++)
-        {
-            x[i] = i;
-        }
-    }
-    {
-        LOG_DURATION("1");
-#pragma omp parallel for num_threads(1)
-        for (int i = 0; i < 10000; i++)
-        {
-            x[i] = i;
-        }
-    }
-    {
-        LOG_DURATION("2");
-#pragma omp parallel for num_threads(2)
-        for (int i = 0; i < 10000; i++)
-        {
-            x[i] = i;
-        }
-    }
-    std::cin >> x[0];
 }
