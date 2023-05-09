@@ -123,22 +123,23 @@ void TestReduction()
     }
 }
 
-const double a = 0;
-const double b = 2;
+const double a = -1;
+const double b = 1;
+const double epsilon = 0.05;
 
 double q(double x)
 {
-    return x*x;
+    return 1.0 / epsilon;
 }
 
 double f(double x)
 {
-    return (4 + x * x) * cos(2 * x);
+    return (1.0 / epsilon + M_PI * M_PI) * cos(M_PI * x);
 }
 
 double u(double x)
 {
-    return cos(2 * x);
+    return cos(M_PI * x) + exp((x - 1) / sqrt(epsilon)) + exp(-(x + 1) / sqrt(epsilon));
 }
 
 double Inaccuracy(std::vector<double> x, std::vector<double> y)
