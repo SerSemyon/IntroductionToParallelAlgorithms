@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <string>
 #include "log_duration.h"
 
 std::vector<double> CreateRandomVector(size_t n)
@@ -18,24 +19,29 @@ std::vector<double> CreateRandomVector(size_t n)
     return result;
 }
 
-std::vector<double> CyclicReduction(std::vector<double> a, std::vector<double> b, std::vector<double> c, std::vector<double> f, const int q, const int n)
+int numThreads;
+
+std::vector<double> CyclicReduction(const std::vector<double> A,const std::vector<double> B, const std::vector<double> C, const std::vector<double> F, const int q, const int n)
 {
-    omp_set_num_threads(3);
     double* P = new double[n];
-    double* Q = new double[n];
+    double* Q = new double[n]; 
+    std::vector<double> a(A);
+    std::vector<double> b(B);
+    std::vector<double> c(C);
+    std::vector<double> f(F);
     for (int k = 1; k < q; k++)
     {
         int twoInK = pow(2, k);
-        int twoInKminusOne = pow(2, k - 1);
-#pragma omp parallel for
+        int twoInKMinusOne = pow(2, k - 1);
+#pragma omp parallel for num_threads(numThreads)
         for (int i = twoInK; i < n; i += twoInK)
         {
-            P[i] = a[i] / b[i - twoInKminusOne];
-            Q[i] = c[i] / b[i + twoInKminusOne];
-            a[i] = P[i] * a[i - twoInKminusOne];
-            b[i] = b[i] - P[i] * c[i - twoInKminusOne] - Q[i] * a[i + twoInKminusOne];
-            c[i] = Q[i] * c[i + twoInKminusOne];
-            f[i] = f[i] + P[i] * f[i - twoInKminusOne] + Q[i] * f[i + twoInKminusOne];
+            P[i] = a[i] / b[i - twoInKMinusOne];
+            Q[i] = c[i] / b[i + twoInKMinusOne];
+            a[i] = P[i] * a[i - twoInKMinusOne];
+            b[i] = b[i] - P[i] * c[i - twoInKMinusOne] - Q[i] * a[i + twoInKMinusOne];
+            c[i] = Q[i] * c[i + twoInKMinusOne];
+            f[i] = f[i] + P[i] * f[i - twoInKMinusOne] + Q[i] * f[i + twoInKMinusOne];
         }
     }
     std::vector<double> x(n + 1);
@@ -44,10 +50,11 @@ std::vector<double> CyclicReduction(std::vector<double> a, std::vector<double> b
     for (int k = q; k > 0; k--)
     {
         int twoInK = pow(2, k);
-        int twoInKminusOne = pow(2, k - 1);
-        for (int i = twoInKminusOne; i <= n - twoInKminusOne; i += twoInK)
+        int twoInKMinusOne = pow(2, k - 1);
+#pragma omp parallel for num_threads(numThreads)
+        for (int i = twoInKMinusOne; i <= n - twoInKMinusOne; i += twoInK)
         {
-            x[i] = (f[i] + a[i] * x[i - twoInKminusOne] + c[i] * x[i + twoInKminusOne]) / b[i];
+            x[i] = (f[i] + a[i] * x[i - twoInKMinusOne] + c[i] * x[i + twoInKMinusOne]) / b[i];
         }
     }
     delete[] P;
@@ -55,8 +62,12 @@ std::vector<double> CyclicReduction(std::vector<double> a, std::vector<double> b
     return x;
 }
 
-std::vector<double> ThomasAlgorithm(std::vector<double>a, std::vector<double>b, std::vector<double>c, std::vector<double>f)
+std::vector<double> ThomasAlgorithm(std::vector<double> A, std::vector<double> B, std::vector<double> C, std::vector<double> F)
 {
+    std::vector<double> a(A);
+    std::vector<double> b(B);
+    std::vector<double> c(C);
+    std::vector<double> f(F);
     int n = f.size() - 1;
     std::vector<double> P(n), Q(n), x(n+1);
     P[0] = c[0] / b[0]; Q[0] = f[0] / b[0];
@@ -119,11 +130,15 @@ void TestReduction()
     }
     f[0] = x[0];
     f[n] = x[n];
-    std::vector<double> res = CyclicReduction(a, b, c, f, q, n);
-    for (int i = 0; i < res.size(); i++)
     {
-        //std::cout << x[i] << " " << res[i] << std::endl;
+        LOG_DURATION("reduction");
+        std::vector<double> res = CyclicReduction(a, b, c, f, q, n);
     }
+    //std::vector<double> res = CyclicReduction(a, b, c, f, q, n);
+    //for (int i = 0; i < res.size(); i++)
+    //{
+    //    //std::cout << x[i] << " " << res[i] << std::endl;
+    //}
 }
 
 const double a = 0;
@@ -185,17 +200,47 @@ void Task1(double degree)
     c3[n] = 0;
     d[0] = u(x[0]);
     d[n] = u(x[n]);
-    std::vector<double> res = CyclicReduction(c1, c2, c3, d, degree, n);
-    for (size_t i = 0; i < res.size(); i++)
+    std::vector<double> res(n + 1);
     {
-        //std::cout << u(x[i]) << " " << res[i] << std::endl;
+        LOG_DURATION("Thomas");
+        res = ThomasAlgorithm(c1, c2, c3, d);
+    }
+    std::cout << "inaccuracy " << Inaccuracy(x, res) << std::endl;
+    numThreads = 2;
+    {
+        //LOG_DURATION("Reduction "+std::to_string( numThreads));
+        res = CyclicReduction(c1, c2, c3, d, degree, n);
+    }
+    {
+        LOG_DURATION("Reduction " + std::to_string(numThreads));
+        res = CyclicReduction(c1, c2, c3, d, degree, n);
+    }
+    std::cout << "inaccuracy " << Inaccuracy(x, res) << std::endl;
+    numThreads = 4;
+    {
+        //LOG_DURATION("Reduction " + std::to_string(numThreads));
+        res = CyclicReduction(c1, c2, c3, d, degree, n);
+    }
+    {
+        LOG_DURATION("Reduction " + std::to_string(numThreads));
+        res = CyclicReduction(c1, c2, c3, d, degree, n);
+    }
+    std::cout << "inaccuracy " << Inaccuracy(x, res) << std::endl;
+    numThreads = 6;
+    {
+        //LOG_DURATION("Reduction " + std::to_string(numThreads));
+        res = CyclicReduction(c1, c2, c3, d, degree, n);
+    }
+    {
+        LOG_DURATION("Reduction " + std::to_string(numThreads));
+        res = CyclicReduction(c1, c2, c3, d, degree, n);
     }
     std::cout << "inaccuracy " << Inaccuracy(x, res) << std::endl;
 }
 
 int main()
 {
-    {
+    /*{
         LOG_DURATION("Progonka");
         TestThomas();
     }
@@ -203,9 +248,15 @@ int main()
         LOG_DURATION("TestReduction");
         for (int i = 0; i < 1; i++)
             TestReduction();
-    }
+    }*/
+    for (int i = 9; i < 20; i++)
     {
-        LOG_DURATION("Task 1");
-        Task1(8);
+        std::cout << "number divisions " << pow(2,i) << std::endl;
+        Task1(i);
+        std::cout << std::endl;
     }
+    /*for (int i = 0; i < 4; i++)
+    {
+        Task1(10);
+    }*/
 }
