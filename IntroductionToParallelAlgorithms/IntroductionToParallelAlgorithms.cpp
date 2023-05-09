@@ -105,12 +105,7 @@ void TestThomas()
         f[i] = -a[i] * x[i - 1] + b[i] * x[i] - c[i] * x[i + 1];
     }
     f[n] = -a[n] * x[n - 1] + b[n] * x[n];
-    //f[n] = 0;
     std::vector<double> res = ThomasAlgorithm(a, b, c, f);
-    for (int i = 0; i < res.size(); i++)
-    {
-        //std::cout << x[i] << " " << res[i] << std::endl;
-    }
 }
 
 void TestReduction() 
@@ -138,30 +133,44 @@ void TestReduction()
         LOG_DURATION("reduction");
         std::vector<double> res = CyclicReduction(a, b, c, f, q, n);
     }
-    //std::vector<double> res = CyclicReduction(a, b, c, f, q, n);
-    //for (int i = 0; i < res.size(); i++)
-    //{
-    //    //std::cout << x[i] << " " << res[i] << std::endl;
-    //}
 }
 
+//const double a = 0;
+//const double b = 1;
+//const double epsilon = 0.05;
+//
+//double q(double x)
+//{
+//    return 1.0 / epsilon;
+//}
+//
+//double f(double x)
+//{
+//    return 0;
+//}
+//
+//double u(double x)
+//{
+//    return (exp(-x/sqrt(epsilon))-exp((x-2)/sqrt(epsilon)))/(1-exp(-2/sqrt(epsilon)));
+//}
+
 const double a = 0;
-const double b = 1;
+const double b = 2;
 const double epsilon = 0.05;
 
 double q(double x)
 {
-    return 1.0 / epsilon;
+    return x*x;
 }
 
 double f(double x)
 {
-    return 0;
+    return (4 + x * x) * cos(2 * x);
 }
 
 double u(double x)
 {
-    return (exp(-x/sqrt(epsilon))-exp((x-2)/sqrt(epsilon)))/(1-exp(-2/sqrt(epsilon)));
+    return cos(2 * x);
 }
 
 double Inaccuracy(std::vector<double> x, std::vector<double> y)
@@ -254,23 +263,10 @@ void Task1(double degree)
 
 int main()
 {
-    /*{
-        LOG_DURATION("Progonka");
-        TestThomas();
-    }
-    {
-        LOG_DURATION("TestReduction");
-        for (int i = 0; i < 1; i++)
-            TestReduction();
-    }*/
-    for (int i = 9; i < 20; i++)
+    for (int i = 9; i < 13; i++)
     {
         std::cout << "number divisions " << pow(2,i) << std::endl;
         Task1(i);
         std::cout << std::endl;
     }
-    /*for (int i = 0; i < 4; i++)
-    {
-        Task1(10);
-    }*/
 }
