@@ -33,7 +33,11 @@ std::vector<double> CyclicReduction(const std::vector<double> A,const std::vecto
     {
         int twoInK = pow(2, k);
         int twoInKMinusOne = pow(2, k - 1);
-#pragma omp parallel for num_threads(numThreads)
+        std::vector<double> a_new(a);
+        std::vector<double> b_new(b);
+        std::vector<double> c_new(c);
+        std::vector<double> f_new(f);
+#pragma omp parallel for num_threads(numThreads) 
         for (int i = twoInK; i < n; i += twoInK)
         {
             P[i] = a[i] / b[i - twoInKMinusOne];
@@ -204,6 +208,16 @@ void Task1(double degree)
     {
         LOG_DURATION("Thomas");
         res = ThomasAlgorithm(c1, c2, c3, d);
+    }
+    std::cout << "inaccuracy " << Inaccuracy(x, res) << std::endl;
+    numThreads = 1;
+    {
+        //LOG_DURATION("Reduction "+std::to_string( numThreads));
+        res = CyclicReduction(c1, c2, c3, d, degree, n);
+    }
+    {
+        LOG_DURATION("Reduction " + std::to_string(numThreads));
+        res = CyclicReduction(c1, c2, c3, d, degree, n);
     }
     std::cout << "inaccuracy " << Inaccuracy(x, res) << std::endl;
     numThreads = 2;
