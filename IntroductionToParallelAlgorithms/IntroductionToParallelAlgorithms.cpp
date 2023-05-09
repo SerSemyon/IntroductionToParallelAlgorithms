@@ -21,23 +21,15 @@ std::vector<double> CreateRandomVector(size_t n)
 
 int numThreads;
 
-std::vector<double> CyclicReduction(const std::vector<double> A,const std::vector<double> B, const std::vector<double> C, const std::vector<double> F, const int q, const int n)
+std::vector<double> CyclicReduction(std::vector<double> a, std::vector<double> b, std::vector<double> c, std::vector<double> f, const int q, const int n)
 {
     double* P = new double[n];
     double* Q = new double[n]; 
-    std::vector<double> a(A);
-    std::vector<double> b(B);
-    std::vector<double> c(C);
-    std::vector<double> f(F);
     for (int k = 1; k < q; k++)
     {
         int twoInK = pow(2, k);
         int twoInKMinusOne = pow(2, k - 1);
-        std::vector<double> a_new(a);
-        std::vector<double> b_new(b);
-        std::vector<double> c_new(c);
-        std::vector<double> f_new(f);
-#pragma omp parallel for num_threads(numThreads) 
+#pragma omp parallel for num_threads(numThreads)
         for (int i = twoInK; i < n; i += twoInK)
         {
             P[i] = a[i] / b[i - twoInKMinusOne];
@@ -66,12 +58,8 @@ std::vector<double> CyclicReduction(const std::vector<double> A,const std::vecto
     return x;
 }
 
-std::vector<double> ThomasAlgorithm(std::vector<double> A, std::vector<double> B, std::vector<double> C, std::vector<double> F)
+std::vector<double> ThomasAlgorithm(std::vector<double> a, std::vector<double> b, std::vector<double> c, std::vector<double> f)
 {
-    std::vector<double> a(A);
-    std::vector<double> b(B);
-    std::vector<double> c(C);
-    std::vector<double> f(F);
     int n = f.size() - 1;
     std::vector<double> P(n), Q(n), x(n+1);
     P[0] = c[0] / b[0]; Q[0] = f[0] / b[0];
@@ -135,28 +123,8 @@ void TestReduction()
     }
 }
 
-//const double a = 0;
-//const double b = 1;
-//const double epsilon = 0.05;
-//
-//double q(double x)
-//{
-//    return 1.0 / epsilon;
-//}
-//
-//double f(double x)
-//{
-//    return 0;
-//}
-//
-//double u(double x)
-//{
-//    return (exp(-x/sqrt(epsilon))-exp((x-2)/sqrt(epsilon)))/(1-exp(-2/sqrt(epsilon)));
-//}
-
 const double a = 0;
 const double b = 2;
-const double epsilon = 0.05;
 
 double q(double x)
 {
@@ -269,4 +237,31 @@ int main()
         Task1(i);
         std::cout << std::endl;
     }
+
+    std::cout << std::endl;
+    std::vector<double> x(10000);
+    {
+        LOG_DURATION("1");
+        for (int i = 0; i < 10000; i++)
+        {
+            x[i] = i;
+        }
+    }
+    {
+        LOG_DURATION("1");
+#pragma omp parallel for num_threads(1)
+        for (int i = 0; i < 10000; i++)
+        {
+            x[i] = i;
+        }
+    }
+    {
+        LOG_DURATION("2");
+#pragma omp parallel for num_threads(2)
+        for (int i = 0; i < 10000; i++)
+        {
+            x[i] = i;
+        }
+    }
+    std::cin >> x[0];
 }
